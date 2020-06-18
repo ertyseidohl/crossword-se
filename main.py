@@ -29,11 +29,15 @@ class CrosswordTests(unittest.TestCase):
         self.driver.get('http://localhost:8080/')
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.ID, 'app')))
+        self._disable_save_warning()
         self._set_up_test_server()
         self._set_size_to_3x3()
 
     def _set_up_test_server(self):
         self.driver.execute_script('window.replaceServer("//localhost:8079")')
+
+    def _disable_save_warning(self):
+        self.driver.execute_script('window.disableSaveWarning()')
 
     def _set_size_to_3x3(self):
         width = self.driver.find_element_by_id('width')
@@ -124,6 +128,62 @@ class CrosswordTests(unittest.TestCase):
         # Hitting shift+tab from the clue should take us back to the center cell.
         center_cell_across_clue.send_keys(Keys.SHIFT + Keys.TAB)
         self.assertEqual(self._get_focused_element(), center_cell)
+
+    def test_get_completions(self):
+        """Test that getting completions incl. local words works."""
+        desired_words = self.driver.find_element_by_id("desiredwords")
+        desired_words.send_keys("""
+            haa
+            hbb
+            hcc
+            hdd
+            hee
+            hff
+            hgg
+            hhh
+            hii
+            hjj
+            hkk
+            hll
+        """.replace(' ', ''))
+
+        first_cell = self.driver.find_element_by_id('0,0')
+        first_cell.send_keys('H')
+        first_cell.send_keys(Keys.RETURN)
+
+        WebDriverWait(self.driver, 10).until(
+            EC.text_to_be_present_in_element((By.ID, 'wordlist__page'), "(Page 1)"))
+
+        wordlist = self.driver.find_element_by_id('wordlist')
+        options = [x.get_attribute('value') for x in wordlist.find_elements_by_tag_name('option')]
+        self.assertEqual(options, [
+            "HAA", "HBB", "HCC", "HDD", "HEE", "HFF", "HGG", "HHH", "HII", "HJJ"
+        ])
+
+        wordlist.send_keys(Keys.ARROW_RIGHT)
+        WebDriverWait(self.driver, 10).until(
+            EC.text_to_be_present_in_element((By.ID, 'wordlist__page'), "(Page 2)"))
+        options = [x.get_attribute('value') for x in wordlist.find_elements_by_tag_name('option')]
+        self.assertEqual(options, [
+            "HKK", "HLL", "HMM", "HNN"
+        ])
+
+        wordlist.send_keys(Keys.ARROW_LEFT)
+        WebDriverWait(self.driver, 10).until(
+            EC.text_to_be_present_in_element((By.ID, 'wordlist__page'), "(Page 1)"))
+        options = [x.get_attribute('value') for x in wordlist.find_elements_by_tag_name('option')]
+        self.assertEqual(options, [
+            "HAA", "HBB", "HCC", "HDD", "HEE", "HFF", "HGG", "HHH", "HII", "HJJ"
+        ])
+
+        wordlist.send_keys(Keys.ARROW_RIGHT)
+        WebDriverWait(self.driver, 10).until(
+            EC.text_to_be_present_in_element((By.ID, 'wordlist__page'), "(Page 2)"))
+        options = [x.get_attribute('value') for x in wordlist.find_elements_by_tag_name('option')]
+        self.assertEqual(options, [
+            "HKK", "HLL", "HMM", "HNN"
+        ])
+
 
 if __name__ == '__main__':
     test_server = TestServer()

@@ -15,9 +15,15 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
         if self.path == '/words?word=...&page=0':
             self._set_headers(200)
             self.wfile.write(b'AAA BBB CCC DDD EEE FFF GGG HHH III JJJ')
-        elif self.path == '/words?word=H....&page=0':
+        elif self.path == '/words?word=...&page=1':
             self._set_headers(200)
             self.wfile.write(b'LLL MMM NNN OOO PPP QQQ RRR SSS TTT UUU')
+        elif self.path == '/words?word=H..&page=0':
+            self._set_headers(200)
+            self.wfile.write(b'HMM HNN')
+        elif self.path == '/words?word=H..&page=1':
+            self._set_headers(200)
+            self.wfile.write(b'')
         elif self.path == '/solve?crossword=...%0A...%0A...':
             self._set_headers(200)
             self.wfile.write(b'ERA\nREL\nEDE')
